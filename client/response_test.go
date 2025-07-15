@@ -9,11 +9,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/gofiber/fiber/v3/internal/tlstest"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/valyala/fasthttp/fasthttputil"
 )
 
 func Test_Response_Status(t *testing.T) {
@@ -306,33 +308,50 @@ func Test_Response_Body(t *testing.T) {
 	t.Parallel()
 
 	setupApp := func() *testServer {
-		server := startTestServer(t, func(app *fiber.App) {
-			app.Get("/", func(c fiber.Ctx) error {
-				return c.SendString("hello world")
-			})
+		// Create app with CBOR support configured
+		ln := fasthttputil.NewInmemoryListener()
+		app := fiber.New(fiber.Config{
+			CBOREncoder: cbor.Marshal,
+			CBORDecoder: cbor.Unmarshal,
+		})
 
-			app.Get("/json", func(c fiber.Ctx) error {
-				return c.SendString("{\"status\":\"success\"}")
-			})
+		app.Get("/", func(c fiber.Ctx) error {
+			return c.SendString("hello world")
+		})
 
-			app.Get("/xml", func(c fiber.Ctx) error {
-				return c.SendString("<status><name>success</name></status>")
-			})
+		app.Get("/json", func(c fiber.Ctx) error {
+			return c.SendString("{\"status\":\"success\"}")
+		})
 
-			app.Get("/cbor", func(c fiber.Ctx) error {
-				type cborData struct {
-					Name string `cbor:"name"`
-					Age  int    `cbor:"age"`
-				}
+		app.Get("/xml", func(c fiber.Ctx) error {
+			return c.SendString("<status><n>success</n></status>")
+		})
 
-				return c.CBOR(cborData{
-					Name: "foo",
-					Age:  12,
-				})
+		app.Get("/cbor", func(c fiber.Ctx) error {
+			type cborData struct {
+				Name string `cbor:"name"`
+				Age  int    `cbor:"age"`
+			}
+
+			return c.CBOR(cborData{
+				Name: "foo",
+				Age:  12,
 			})
 		})
 
-		return server
+		ch := make(chan struct{})
+		go func() {
+			err := app.Listener(ln, fiber.ListenConfig{DisableStartupMessage: true})
+			assert.NoError(t, err)
+			close(ch)
+		}()
+
+		return &testServer{
+			app: app,
+			ch:  ch,
+			ln:  ln,
+			tb:  t,
+		}
 	}
 
 	t.Run("raw body", func(t *testing.T) {

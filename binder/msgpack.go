@@ -31,3 +31,11 @@ func UnimplementedMsgpackMarshal(_ any) ([]byte, error) {
 func UnimplementedMsgpackUnmarshal(_ []byte, _ any) error {
 	panic("Must explicits setup Msgpack, please check docs: https://docs.gofiber.io/next/guide/advance-format#msgpack")
 }
+
+func UnimplementedCborMarshal(_ any) ([]byte, error) {
+	panic("Must explicits setup CBOR, please check docs: https://docs.gofiber.io/next/guide/advance-format#cbor")
+}
+
+func UnimplementedCborUnmarshal(_ []byte, _ any) error {
+	panic("Must explicits setup CBOR, please check docs: https://docs.gofiber.io/next/guide/advance-format#cbor")
+}
