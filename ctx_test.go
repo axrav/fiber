@@ -27,6 +27,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
+
 	"github.com/gofiber/fiber/v3/internal/storage/memory"
 	"github.com/gofiber/utils/v2"
 	"github.com/shamaton/msgpack/v2"
@@ -4210,7 +4212,10 @@ func Benchmark_Ctx_MsgPack(b *testing.B) {
 // go test -run Test_Ctx_CBOR
 func Test_Ctx_CBOR(t *testing.T) {
 	t.Parallel()
-	app := New()
+	app := New(Config{
+		CBOREncoder: cbor.Marshal,
+		CBORDecoder: cbor.Unmarshal,
+	})
 	c := app.AcquireCtx(&fasthttp.RequestCtx{})
 
 	require.Error(t, c.CBOR(complex(1, 1)))

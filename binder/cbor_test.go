@@ -60,6 +60,23 @@ func Test_CBORBinder_Bind(t *testing.T) {
 	require.Nil(t, b.CBORDecoder)
 }
 
+func Test_CBORBinder_Bind_UnimplementedDecoder_Panics(t *testing.T) {
+	t.Parallel()
+
+	b := &CBORBinding{
+		CBORDecoder: UnimplementedCborUnmarshal,
+	}
+
+	var user struct {
+		Name string `cbor:"name"`
+	}
+
+	require.Panics(t, func() {
+		err := b.Bind([]byte{0x80}, &user)
+		require.NoError(t, err)
+	})
+}
+
 func Benchmark_CBORBinder_Bind(b *testing.B) {
 	b.ReportAllocs()
 

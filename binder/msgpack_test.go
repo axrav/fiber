@@ -131,3 +131,49 @@ func Test_UnimplementedMsgpackUnmarshal_PanicMessage(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func Test_UnimplementedCborMarshal_Panics(t *testing.T) {
+	t.Parallel()
+
+	require.Panics(t, func() {
+		_, err := UnimplementedCborMarshal(struct{ Name string }{Name: "test"})
+		require.NoError(t, err)
+	})
+}
+
+func Test_UnimplementedCborUnmarshal_Panics(t *testing.T) {
+	t.Parallel()
+
+	require.Panics(t, func() {
+		var out any
+		err := UnimplementedCborUnmarshal([]byte{0x80}, &out)
+		require.NoError(t, err)
+	})
+}
+
+func Test_UnimplementedCborMarshal_PanicMessage(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r != nil {
+			require.Contains(t, r, "Must explicits setup CBOR")
+		}
+	}()
+	_, err := UnimplementedCborMarshal(struct{ Name string }{Name: "test"})
+
+	require.NoError(t, err)
+}
+
+func Test_UnimplementedCborUnmarshal_PanicMessage(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r != nil {
+			require.Contains(t, r, "Must explicits setup CBOR")
+		}
+	}()
+	var out any
+	err := UnimplementedCborUnmarshal([]byte{0x80}, &out)
+
+	require.NoError(t, err)
+}
